@@ -24,16 +24,15 @@ DatosMs=dlmread('./macasinb.csv',";")(:,4:end);
 %% Transforma a DateNum
 %DAYS = datenum (YEAR, MONTH, DAY, HOUR, MINUTE)
 FechasE=datenum(DatosE(:,3)+2000,DatosE(:,2),DatosE(:,1),DatosE(:,4),DatosE(:,5));
-
 FechasMc=datenum(DatosMc(:,3)+2000,DatosMc(:,2),DatosMc(:,1),DatosMc(:,4),DatosMc(:,5));
 FechasMs=datenum(DatosMs(:,3)+2000,DatosMs(:,2),DatosMs(:,1),DatosMs(:,4),DatosMs(:,5));
 
 % Encontrar las fechas para las que hay datos de ambos equipos
 FechasE_Match = ismember(FechasE, FechasMc);	%Fechas camion para las que hay datos del MACA.
 MatchDates = FechasE(FechasE_Match);
-FechasM_Match = ismember(unique(FechasMc), MatchDates);	%Fechas del MACA para la que hay coincidencia.
+FechasMc_Match = ismember(unique(FechasMc), MatchDates);	%Fechas del MACA para la que hay coincidencia.
 
-%Grafica todos los datos del camión
+%Grafica todos los datos del camión (diarios)
 figure(1)
 clf
 for j=1:10
@@ -50,6 +49,43 @@ set(axE, "xticklabel", [ 0 4 8 12 16 20 24]);
 xlabel( "Tiempo","fontname", "DejaVuSans-Bold.ttf", "fontsize", 10);
 ylabel( EtiqE{j},"fontname", "DejaVuSans-Bold.ttf", "fontsize", 10, "color", [0,1,0])
 endfor
+
+% Grafica serie de datos de PM10 Camion
+graphics_toolkit ("gnuplot")
+figure(2)
+clf
+plotyy(FechasE,DatosE(:,9),FechasE,DatosE(:,13))
+axA=gca();
+set(axA,"xtick",FechasPlot)
+set(axA,"xlabel",datestr
+
+%Comparacion de MACAb con referencia
+
+% Ozono
+figure(3)
+clf
+subplot(2,1,1)
+graphics_toolkit ("gnuplot")
+plotyy(FechasE,DatosE(:,10),FechasMc,DatosMc(:,6))
+subplot(2,1,2)
+graphics_toolkit ("qt")
+scatter(DatosE(FechasE_Match,10),DatosMc(FechasMc_Match,6))
+
+% Temperatura
+figure(4)
+clf
+subplot(2,1,1)
+graphics_toolkit ("gnuplot")
+plotyy(FechasE,DatosE(:,11),FechasMc,DatosMc(:,13))
+subplot(2,1,2)
+graphics_toolkit ("qt")
+scatter(DatosE(FechasE_Match,11),DatosMc(FechasMc_Match,13))
+
+P = polyfit (DatosE(FechasE_Match,11),DatosMc(FechasMc_Match,13),1)
+
+
+clf
+scatter(DatosMc(:,13),DatosMc(:,6))
 
 %Grafica los datos del MACA con Blue
 figure(2)
@@ -68,4 +104,30 @@ set(axE, "xticklabel", [ 0 4 8 12 16 20 24]);
 xlabel( "Tiempo","fontname", "DejaVuSans-Bold.ttf", "fontsize", 10);
 %ylabel( EtiqE{j},"fontname", "DejaVuSans-Bold.ttf", "fontsize", 10, "color", [0,1,0])
 endfor
+
+graphics_toolkit("gt")
+Intervalo=6;
+FechasPlot = floor(FechasMc(1)):1/24:ceil(FechasMc(end));
+figure(4)
+clf
+plot(FechasMc, DatosMc(:,6), "-b", "linewidth", 3);
+box off
+axM = gca();
+set(axM, "yaxislocation", "left")
+set(axM, "linewidth", 1)
+LimM = get(axM, "xlim");	%Asignamos el mismo lÂ´imete a ambos ejes X
+set(axM, "xtick", [0])		%Ocultamos uno de los ejes.
+ylblM = ylabel( "Resistencia [ohm]","fontname", "DejaVuSans-Bold.ttf", "fontsize", 18, "color", [0,0,1]);
+set(axM, "fontname", "DejaVuSans-Bold.ttf", "fontsize", 16)
+axE = axes();	%Nuevo juego de ejes para graficar la otra variable.
+plot(FechasE, DatosE(:,10), "-r", "linewidth", 3);
+set(axE, "xlim", LimM)
+box off
+set(axE, "xtick", FechasPlot(1:Intervalo:end))
+set(axE, "xticklabel", datestr(FechasPlot(1:Intervalo:end), "HH"))	%Colocamos las tickmarks y sus etiquetas.
+xlblE = xlabel( "Tiempo","fontname", "DejaVuSans-Bold.ttf", "fontsize", 18);
+set(axE, "yaxislocation", "right")
+set(axE, "linewidth", 1)
+set(axE, "fontname", "DejaVuSans-Bold.ttf", "fontsize", 16)
+ylblE = ylabel( "Ozono (ppb)","fontname", "DejaVuSans-Bold.ttf", "fontsize", 18, "color", [0,1,0]);
 
