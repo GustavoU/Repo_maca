@@ -1,19 +1,22 @@
 cls
 clear
 
-%%LECTURA
+% Datos de referencia y MACA para los períodos 5/1/2018 al 12/1/2018 (8dias) y 15/12/2018 al 2/2/2018 (18 dias)
+
+%%LECTURA DE LOS DATOS PARA ANALIZAR
 %Lectura de datos del equipo Referencia
 %Dia,mes,año,hora,minuto,NO,NO2,NOx,PM10,O3,Temperatura,DV,Velocidad,HR,CO,SO2
 DatosE = dlmread('./INV2018.csv',";")(4:end,1:16);
-EtiqE = {"NO","NO2","NOx","PM10","O3","Temperatura","DV","Velocidad","HR","CO"};
+EtiqE = {"NO","NO2","NOx","PM10","O3","Temperatura","DV","Velocidad","HR","CO","SO2"};
 
 
 %Lectura de datos del MACA CON bluetooth
+%Aclaración: los datos de PM son en realidad datos de LPO del Shinyei
 %Dia,mes,año,hora,minuto,O3,NO2,CO,dO3,dNO2,dCO,HR,T,PM2.5,PM10
 DatosMc=dlmread('./macaconb.csv',";")(:,3:end);
 
 %Lectura de datos del MACA SIN bluetooth
-%Dia,mes,año,hora,minuto,dO3,dNO2,dCO,HR,T, (calcular O3,NO2,CO)
+%Dia,mes,año,hora,minuto,O3,NO2,CO,dO3,dNO2,dCO,HR,T, (calcular O3,NO2,CO)
 DatosMs=dlmread('./macasinb.csv',";")(:,4:end);
 
 %%Imprime la primer linea para verificar que estan ok
@@ -32,11 +35,13 @@ FechasE_Match = ismember(FechasE, FechasMc);	%Fechas camion para las que hay dat
 MatchDates = FechasE(FechasE_Match);
 FechasMc_Match = ismember(unique(FechasMc), MatchDates);	%Fechas del MACA para la que hay coincidencia.
 
+graphics_toolkit ("gnuplot")
+
 %Grafica todos los datos del camión (diarios)
-figure(1)
+
+for j=1:11
+h=figure(j)
 clf
-for j=1:10
-subplot(5,2,j);
 for i=min(DatosE(:,1)):max(DatosE(:,1))
 Dia=find(DatosE(:,1)==i);
 Horaplot=FechasE(Dia)-fix(FechasE(Dia));
@@ -48,6 +53,21 @@ set(axE,"xtick",min(Horaplot):max(Horaplot)/6:max(Horaplot));
 set(axE, "xticklabel", [ 0 4 8 12 16 20 24]);
 xlabel( "Tiempo","fontname", "DejaVuSans-Bold.ttf", "fontsize", 10);
 ylabel( EtiqE{j},"fontname", "DejaVuSans-Bold.ttf", "fontsize", 10, "color", [0,1,0])
+nombre=EtiqE{j};
+print(h,nombre,"-dpng");
+endfor
+
+
+%Grafica de todos los datos camión dia por dia (NO, NO2, O3)
+% Toma periodos de 8 dias
+figure(2)
+Enero=find(DatosE(:,2)==1);
+for i=min(DatosE(Enero,1)):(10+min(DatosE(Enero,1)))
+Dia=find(DatosE(Enero,1)==i);
+Horaplot=FechasE(Dia)-fix(FechasE(Dia));
+subplot(5,2,i);
+plot(Horaplot,DatosE(Dia,6));
+hold on
 endfor
 
 % Grafica serie de datos de PM10 Camion
